@@ -33,8 +33,5 @@ abstract class Model {
 		public function update(){
 				self::getDB()->update($this::getTableName(),$this->getId(),$this->toArray());
 		}
-		public function delete(){
-				self::getDB()->update($this::getTableName(),$this->getId(),$this->toArray());
-		}
 
 }
