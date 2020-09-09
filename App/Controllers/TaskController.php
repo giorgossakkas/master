@@ -8,6 +8,17 @@ use App\Models\Task;
 
 class TaskController {
 
+  public function index()
+  {
+      if(session_status() !== PHP_SESSION_ACTIVE)
+          session_start();
+
+      $sqlParams['teamleaderid']=$_SESSION["id"];
+      $sql = "SELECT * FROM TASKS WHERE USER_ID IS NULL UNION SELECT * FROM TASKS WHERE USER_ID IN (SELECT ID FROM USERS WHERE TEAM_LEADER_ID =:teamleaderid)";
+      $tasks = Task::getDB()->execute($sql,$sqlParams,Task::class);
+
+      View::render("tasks/index.view.php",["tasks" => $tasks]);
+  }
   public function create()
   {
       View::render("tasks/create.view.php");
@@ -28,7 +39,10 @@ class TaskController {
       if (isset($id))
       {
           $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
-          $users = Task::getDB()->readAll(User::getTableName(),User::class);
+          if(session_status() !== PHP_SESSION_ACTIVE)
+              session_start();
+          $sqlParams['team_leader_id']=$_SESSION["id"];
+          $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
 
           View::render("tasks/assign.view.php",["task" => $task,"users" => $users]);
       }
@@ -48,7 +62,7 @@ class TaskController {
       }
 
       $task->create();
-      header('Location: /index');
+      header('Location: /tasks/index');
   }
 
   public function update($id)
@@ -68,7 +82,7 @@ class TaskController {
         }
 
         $task->update();
-        header('Location: /index');
+        header('Location: /tasks/index');
       }
 
   }
@@ -84,6 +98,17 @@ class TaskController {
       }
   }
 
+  public function unassign($id)
+  {
+    if (isset($id))
+    {
+        $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
+        $task->setUserId(null);
+        $task->update();
+        header('Location: /tasks/index');
+      }
+  }
+
   public function storeAssignTask($id)
   {
     if (isset($id))
@@ -91,7 +116,7 @@ class TaskController {
         $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
         $task->setUserId($_POST['user_id']);
         $task->update();
-        header('Location: /index');
+        header('Location: /tasks/index');
       }
   }
 
@@ -100,7 +125,7 @@ class TaskController {
     if (isset($id))
     {
         Task::getDB()->delete(Task::getTableName(),$id);
-        header('Location: /index');
+        header('Location: /tasks/index');
       }
   }
 

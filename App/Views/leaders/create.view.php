@@ -2,7 +2,7 @@
 require "../App/Views/header.view.php";
 ?>
 
-<form action="/users/created" method="post">
+<form action="/leaders/created" method="post">
     <div class="form-group">
         <label for="user_name">Username</label>
         <input
@@ -26,22 +26,11 @@ require "../App/Views/header.view.php";
     <div class="form-group">
         <label for="user_id">Role: </label>
         <select class="form-control" id="role_id" name="role_id" >
-            <option value=""><?php echo 'Please select role' ?></option>
+            <option value=''><?php echo 'Please select role' ?></option>
             <?php
             foreach ($roles as $role) :
             ?>
             <option value="<?php echo $role->getId(); ?>"><?php echo $role->getName(); ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="user_id">Team Leader: </label>
-        <select class="form-control" id="team_leader_id" name="team_leader_id" >
-            <option value=""><?php echo 'Please select team leader' ?></option>
-            <?php
-            foreach ($users as $user) :
-            ?>
-            <option value="<?php echo $user->getId(); ?>"><?php echo $user->getUserName(); ?></option>
             <?php endforeach; ?>
         </select>
     </div>
@@ -55,7 +44,7 @@ require "../App/Views/header.view.php";
             placeholder="Provide password"
             value="<?php echo isset($_POST['password']) ? htmlspecialchars($_POST['password'], ENT_QUOTES) : ''; ?>">
     </div>
-    <a href="/users/index" class="float-right p-2" />Cancel</a>
+    <a href="/leaders/index" class="float-right p-2" />Cancel</a>
     <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

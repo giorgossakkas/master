@@ -10,11 +10,27 @@ class IndexController {
 
     public function index()
     {
-        $query = User::getDB();
-        $users = $query->readAll(User::getTableName(),User::class);
-        $tasks = $query->readAll(Task::getTableName(),Task::class);
+        if(session_status() !== PHP_SESSION_ACTIVE)
+            session_start();
 
-        View::render("index.view.php",["users" => $users,"tasks" => $tasks]);
+        $tasks=[];
+        $teamMembers=[];
+        if (isset($_SESSION["id"]))
+        {
+            $sqlParams['user_id']=$_SESSION["id"];
+            $tasks = Task::getDB()->read(Task::getTableName(),$sqlParams,Task::class);
+
+            $user = User::getDB()->readById(User::getTableName(),$_SESSION["id"],User::class);
+            $teamMembers=[];
+            if ($user->isTeamLeader())
+            {
+                $sqlParams=[];
+                $sqlParams['team_leader_id']=$_SESSION["id"];
+                $teamMembers = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+            }
+        }
+
+        View::render("index.view.php",["tasks" => $tasks,"teamMembers" => $teamMembers]);
     }
 
 }

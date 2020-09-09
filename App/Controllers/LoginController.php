@@ -5,12 +5,19 @@ namespace App\Controllers;
 
 use Core\View;
 use App\Models\User;
+use App\Models\Permission;
 
 class LoginController {
 
     public function index()
     {
-        View::render("login.view.php");
+        $users = User::getDB()->readAll(User::getTableName(),User::class);
+        $userExists = false;
+        if (count($users) > 0)
+        {
+            $userExists = true;
+        }
+        View::render("login.view.php",["userExists" => $userExists]);
     }
 
     public function login()
@@ -28,8 +35,21 @@ class LoginController {
          if (count($users) == 1)
          {
              $user = $users[0];
+
+             $sqlParams= [];
+             $sqlParams['role_id']=$user->getRoleId();
+             $permissions = Permission::getDB()->read(Permission::getTableName(),$sqlParams,Permission::class);
+
              $_SESSION["id"] = $user->getId();
              $_SESSION["user_name"] = $user->getUserName();
+
+             if (count($permissions) > 0)
+             {
+                  foreach ($permissions as $permission)
+                  {
+                      $_SESSION[$permission->getType()] = true;
+                  }
+             }
 
              header('Location: /index');
          }
@@ -43,10 +63,16 @@ class LoginController {
     }
     public function logout()
     {
-        session_start();
+        if(session_status() !== PHP_SESSION_ACTIVE)
+            session_start();
 
         unset($_SESSION["id"]);
-        unset($_SESSION["name"]);
+        unset($_SESSION["user_name"]);
+        unset($_SESSION["MANAGE_ROLES"]);
+        unset($_SESSION["MANAGE_TEAM_LEADERS"]);
+        unset($_SESSION["MANAGE_USERS"]);
+        unset($_SESSION["MANAGE_TASKS"]);
+        unset($_SESSION["COMPLETE_TASKS"]);
 
         header('Location: /');
     }

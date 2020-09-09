@@ -22,7 +22,7 @@ require "../App/Views/header.view.php";
             value="<?php echo isset($_POST['description']) ? htmlspecialchars($_POST['description'], ENT_QUOTES) : ''; ?>" ></textarea>
 
 	</div>
-  <a href="/index" class="float-right p-2" />Cancel</a>
+  <a href="/tasks/index" class="float-right p-2" />Cancel</a>
   <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

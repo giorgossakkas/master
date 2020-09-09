@@ -16,7 +16,6 @@ if(session_status() !== PHP_SESSION_ACTIVE)
     <title>Training</title>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
 </head>
 
 <body>
@@ -25,14 +24,28 @@ if(session_status() !== PHP_SESSION_ACTIVE)
       <ul class="nav navbar-nav ml-auto">
           <?php if (!empty($_SESSION['id'])):?>
               <li class="nav-item active">
-                <a class="nav-link" href="../index">Home<span class="sr-only">(current)</span></a>
+                <a class="nav-link" href="/index">Home<span class="sr-only">(current)</span></a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" href="../users/create">Add User</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="../tasks/create">Add Task</a>
-              </li>
+              <?php if (!empty($_SESSION['MANAGE_USERS'])):?>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/users/index">Users</a>
+                  </li>
+              <?php  endif; ?>
+              <?php if (!empty($_SESSION['MANAGE_TEAM_LEADERS'])):?>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/leaders/index">Team Leaders</a>
+                  </li>
+              <?php  endif; ?>
+              <?php if (!empty($_SESSION['MANAGE_TASKS'])):?>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/tasks/index">Tasks</a>
+                  </li>
+              <?php  endif; ?>
+              <?php if (!empty($_SESSION['MANAGE_ROLES'])):?>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/roles/index">Roles</a>
+                  </li>
+              <?php  endif; ?>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <?= $_SESSION['user_name']; ?>
@@ -45,9 +58,11 @@ if(session_status() !== PHP_SESSION_ACTIVE)
               <li class="nav-item">
                 <a class="nav-link" href="../">Login</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" href="../users/register">Register</a>
-              </li>
+              <?php if (!isset($userExists) || !$userExists):?>
+                  <li class="nav-item">
+                    <a class="nav-link" href="../users/register">Register</a>
+                  </li>
+              <?php endif; ?>
 
             <?php endif; ?>
       </ul>

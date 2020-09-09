@@ -9,6 +9,11 @@ class Router
       'POST' => []
 
     ];
+    protected $permissions = [
+      'GET' => [],
+      'POST' => []
+
+    ];
 
     public static function load($file)
     {
@@ -19,14 +24,22 @@ class Router
         return $router;
     }
 
-    public function get($uri, $controller)
+    public function get($uri, $controller,$permision)
     {
         $this->routes['GET'][$uri] = $controller;
+        if (!empty($permision))
+        {
+              $this->permissions['GET'][$uri] = $permision;
+        }
     }
 
-    public function post($uri, $controller)
+    public function post($uri, $controller,$permision)
     {
         $this->routes['POST'][$uri] = $controller;
+        if (!empty($permision))
+        {
+              $this->permissions['POST'][$uri] = $permision;
+        }
     }
 
     public function direct($uri,$requestType)
@@ -34,15 +47,42 @@ class Router
 
         $route = $this->getMatchingRoute($uri,$requestType);
 
-        $controller = $this->routes[$requestType][$route];
-        $controllerParts = explode ("@", $controller);
+        if (isset($this->permissions[$requestType][$route]))
+        {
+            $permision = $this->permissions[$requestType][$route];
+        }
+        if (empty($permision) || $this->isRouteAllowed($permision) )
+        {
+            $controller = $this->routes[$requestType][$route];
+            $controllerParts = explode ("@", $controller);
 
-        $controllerName = 'App\Controllers\\'. $controllerParts[0];
+            $controllerName = 'App\Controllers\\'. $controllerParts[0];
 
-        $params = $this->getParams($route,$uri);
+            $params = $this->getParams($route,$uri);
 
-        call_user_func_array([new $controllerName(), $controllerParts[1]], $params);
+            call_user_func_array([new $controllerName(), $controllerParts[1]], $params);
+        }
+        else
+        {
+            header('Location: /forbidden');
+        }
 
+    }
+
+    private function isRouteAllowed($permision)
+    {
+        if(session_status() !== PHP_SESSION_ACTIVE)
+            session_start();
+
+        if (empty($permision))
+        {
+              return true;
+        }
+        else if (empty($_SESSION[$permision]))
+        {
+              return false;
+        }
+        return true;
     }
 
     private function getMatchingRoute($uri,$requestType)

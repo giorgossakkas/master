@@ -33,7 +33,7 @@ require "../App/Views/header.view.php";
             placeholder="Provide password"
             value="<?php echo isset($_POST['password']) ? htmlspecialchars($_POST['password'], ENT_QUOTES) : ''; ?>">
     </div>
-    <a href="index" class="float-right p-2" />Cancel</a>
+    <a href="/" class="float-right p-2" />Cancel</a>
     <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

@@ -39,6 +39,17 @@ class QueryBuilder {
 
     }
 
+    public function execute($sql, $params,$intoClass)
+    {
+        $statement = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $statement->bindValue(':'.$key, $value);
+        }
+        $statement->execute();
+        return $statement->fetchAll(\PDO::FETCH_CLASS,$intoClass);
+
+    }
+
     public function readById($table, $id, $intoClass){
         $statement = $this->pdo->prepare('SELECT * FROM '.$table.' WHERE `id` = :id');
         $statement->setFetchMode( \PDO::FETCH_CLASS, $intoClass);

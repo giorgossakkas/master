@@ -11,7 +11,7 @@ require "../App/Views/header.view.php";
     		<label for="description">Description: </label>
         <input type="text" name="description" class="form-control" id="description" value="<?php echo $task->getDescription(); ?>">
   	</div>
-    <a href="/index" class="float-right p-2" />Cancel</a>
+    <a href="/tasks/index" class="float-right p-2" />Cancel</a>
     <button type="submit" class="btn btn-primary float-right" name="update" id="update">Update</button>
 </form>
 
