@@ -1,0 +1,3 @@
+- Create a new database
+- Set the database credentials in the config.php file (Core/config.php)
+- Execute the migrations.sql scripts
