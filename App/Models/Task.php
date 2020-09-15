@@ -10,18 +10,6 @@ class Task extends Model
     private $description;
     private $status;
 
-    public function __construct($task_data = [])
-    {
-
-        if (isset($task_data['id'])) {
-            $this->id=$task_data['id'];
-            $this->$user_id = @$task_data['user_id'];
-            $this->name = @$task_data['name'];
-            $this->description = @$task_data['description'];
-            $this->status = @$task_data['status'];
-        }
-    }
-
 
     public function getId()
     {

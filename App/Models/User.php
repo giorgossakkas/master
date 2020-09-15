@@ -12,19 +12,6 @@ class User extends Model
 		private $team_leader_id;
 		private $is_team_leader;
 
-    public function __construct($user_data = [])
-    {
-        if (isset($user_data['id'])) {
-            $this->id = $user_data['id'];
-            $this->$user_name = @$user_data['user_name'];
-            $this->email = @$user_data['email'];
-            $this->password = @$user_data['password'];
-            $this->role_id = @$user_data['role_id'];
-            $this->team_leader_id = @$user_data['team_leader_id'];
-            $this->is_team_leader = @$user_data['is_team_leader'];
-        }
-    }
-
     public function getId()
     {
         return $this->id;
