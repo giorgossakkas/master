@@ -6,12 +6,17 @@ namespace App\Controllers;
 use Core\View;
 use App\Models\User;
 use App\Models\Permission;
+use Core\SessionHandler;
+use App\Repositories\DB\UserRepository;
+use App\Repositories\DB\PermissionRepository;
 
 class LoginController {
 
     public function index()
     {
-        $users = User::getDB()->readAll(User::getTableName(),User::class);
+        $userRepository = new UserRepository();
+        $users= $userRepository->getAll();
+
         $userExists = false;
         if (count($users) > 0)
         {
@@ -22,34 +27,19 @@ class LoginController {
 
     public function login()
     {
-      if(session_status() !== PHP_SESSION_ACTIVE)
-          session_start();
 
       if(count($_POST)>0)
       {
-         $sqlParams['user_name']=$_POST["user_name"];
-         $sqlParams['password']=$_POST["password"];
 
-         $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+         $userRepository = new UserRepository();
+         $user= $userRepository->findBy('user_name',$_POST["user_name"]);
 
-         if (count($users) == 1)
+         if (! empty($user) && $user->getPassword() == $_POST["password"])
          {
-             $user = $users[0];
+             $permissionRepository = new PermissionRepository();
+             $permissions= $permissionRepository->findAllBy('role_id',$user->getRoleId());
 
-             $sqlParams= [];
-             $sqlParams['role_id']=$user->getRoleId();
-             $permissions = Permission::getDB()->read(Permission::getTableName(),$sqlParams,Permission::class);
-
-             $_SESSION["id"] = $user->getId();
-             $_SESSION["user_name"] = $user->getUserName();
-
-             if (count($permissions) > 0)
-             {
-                  foreach ($permissions as $permission)
-                  {
-                      $_SESSION[$permission->getType()] = true;
-                  }
-             }
+             SessionHandler::create($user,$permissions);
 
              header('Location: /index');
          }
@@ -63,16 +53,7 @@ class LoginController {
     }
     public function logout()
     {
-        if(session_status() !== PHP_SESSION_ACTIVE)
-            session_start();
-
-        unset($_SESSION["id"]);
-        unset($_SESSION["user_name"]);
-        unset($_SESSION["MANAGE_ROLES"]);
-        unset($_SESSION["MANAGE_TEAM_LEADERS"]);
-        unset($_SESSION["MANAGE_USERS"]);
-        unset($_SESSION["MANAGE_TASKS"]);
-        unset($_SESSION["COMPLETE_TASKS"]);
+        SessionHandler::destroy();
 
         header('Location: /');
     }

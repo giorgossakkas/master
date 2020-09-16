@@ -5,17 +5,16 @@ namespace App\Controllers;
 use Core\View;
 use App\Models\User;
 use App\Models\Task;
+use Core\SessionHandler;
+use App\Repositories\DB\TaskRepository;
+use App\Repositories\DB\UserRepository;
 
 class TaskController {
 
   public function index()
   {
-      if(session_status() !== PHP_SESSION_ACTIVE)
-          session_start();
-
-      $sqlParams['teamleaderid']=$_SESSION["id"];
-      $sql = "SELECT * FROM TASKS WHERE USER_ID IS NULL UNION SELECT * FROM TASKS WHERE USER_ID IN (SELECT ID FROM USERS WHERE TEAM_LEADER_ID =:teamleaderid)";
-      $tasks = Task::getDB()->execute($sql,$sqlParams,Task::class);
+      $taskRepository = new TaskRepository();
+      $tasks= $taskRepository->findTasksBelongsToLoggedInUser();
 
       View::render("tasks/index.view.php",["tasks" => $tasks]);
   }
@@ -28,7 +27,8 @@ class TaskController {
   {
       if (isset($id))
       {
-          $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
+          $taskRepository = new TaskRepository();
+          $task= $taskRepository->find($id);
 
           View::render("tasks/edit.view.php",["task" => $task]);
       }
@@ -38,11 +38,11 @@ class TaskController {
   {
       if (isset($id))
       {
-          $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
-          if(session_status() !== PHP_SESSION_ACTIVE)
-              session_start();
-          $sqlParams['team_leader_id']=$_SESSION["id"];
-          $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+          $taskRepository = new TaskRepository();
+          $task= $taskRepository->find($id);
+
+          $userRepository = new UserRepository();
+          $users= $userRepository->findAllBy('team_leader_id',SessionHandler::getLoggedInUserId());
 
           View::render("tasks/assign.view.php",["task" => $task,"users" => $users]);
       }
@@ -51,8 +51,14 @@ class TaskController {
   public function store()
   {
       $task = new Task();
-      $task->setName($_POST['name']);
-      $task->setDescription($_POST['description']);
+      if (isset($_POST['name']))
+      {
+          $task->setName($_POST['name']);
+      }
+      if (isset($_POST['description']))
+      {
+          $task->setDescription($_POST['description']);
+      }
       $task->setStatus("PENDING");
 
       $messages = $task->validate();
@@ -61,7 +67,9 @@ class TaskController {
           return View::render("tasks/create.view.php", ["messages" => $messages]);
       }
 
-      $task->create();
+      $taskRepository = new TaskRepository();
+      $taskRepository->create($task);
+
       header('Location: /tasks/index');
   }
 
@@ -70,10 +78,17 @@ class TaskController {
 
     if (isset($id))
     {
-        $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
+        $taskRepository = new TaskRepository();
+        $task= $taskRepository->find($id);
 
-        $task->setName($_POST['name']);
-        $task->setDescription($_POST['description']);
+        if (isset($_POST['name']))
+        {
+            $task->setName($_POST['name']);
+        }
+        if (isset($_POST['description']))
+        {
+            $task->setDescription($_POST['description']);
+        }
 
         $messages = $task->validate();
         if (count($messages) > 0)
@@ -81,7 +96,9 @@ class TaskController {
             return View::render("tasks/edit.view.php", ["messages" => $messages,"task" => $task]);
         }
 
-        $task->update();
+        $taskRepository = new TaskRepository();
+        $taskRepository->update($task);
+
         header('Location: /tasks/index');
       }
 
@@ -91,9 +108,14 @@ class TaskController {
   {
     if (isset($id))
     {
-        $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
+        $taskRepository = new TaskRepository();
+        $task= $taskRepository->find($id);
+
         $task->setStatus("COMPLETED");
-        $task->update();
+
+        $taskRepository = new TaskRepository();
+        $taskRepository->update($task);
+
         header('Location: /index');
       }
   }
@@ -102,9 +124,14 @@ class TaskController {
   {
     if (isset($id))
     {
-        $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
+        $taskRepository = new TaskRepository();
+        $task= $taskRepository->find($id);
+
         $task->setUserId(null);
-        $task->update();
+
+        $taskRepository = new TaskRepository();
+        $taskRepository->update($task);
+
         header('Location: /tasks/index');
       }
   }
@@ -113,18 +140,28 @@ class TaskController {
   {
     if (isset($id))
     {
-        $task = Task::getDB()->readById(Task::getTableName(),$id,Task::class);
-        $task->setUserId($_POST['user_id']);
-        $task->update();
+        $taskRepository = new TaskRepository();
+        $task= $taskRepository->find($id);
+
+        if (isset($_POST['user_id']))
+        {
+            $task->setUserId($_POST['user_id']);
+
+            $taskRepository = new TaskRepository();
+            $taskRepository->update($task);
+        }
+
         header('Location: /tasks/index');
-      }
+    }
   }
 
   public function delete($id)
   {
     if (isset($id))
     {
-        Task::getDB()->delete(Task::getTableName(),$id);
+        $taskRepository = new TaskRepository();
+        $task= $taskRepository->delete($id);
+
         header('Location: /tasks/index');
       }
   }

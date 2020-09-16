@@ -1,6 +1,6 @@
 <?php
-if(session_status() !== PHP_SESSION_ACTIVE)
-  session_start();
+
+use Core\SessionHandler;
 
  ?>
 
@@ -22,33 +22,33 @@ if(session_status() !== PHP_SESSION_ACTIVE)
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="nav navbar-nav ml-auto">
-          <?php if (!empty($_SESSION['id'])):?>
+          <?php if (!empty(SessionHandler::getLoggedInUserId())):?>
               <li class="nav-item active">
                 <a class="nav-link" href="/index">Home<span class="sr-only">(current)</span></a>
               </li>
-              <?php if (!empty($_SESSION['MANAGE_USERS'])):?>
+              <?php if (SessionHandler::canLoggedInUserManageUsers()):?>
                   <li class="nav-item">
                     <a class="nav-link" href="/users/index">Users</a>
                   </li>
               <?php  endif; ?>
-              <?php if (!empty($_SESSION['MANAGE_TEAM_LEADERS'])):?>
+              <?php if (SessionHandler::canLoggedInUserManageTeamLeaders()):?>
                   <li class="nav-item">
                     <a class="nav-link" href="/leaders/index">Team Leaders</a>
                   </li>
               <?php  endif; ?>
-              <?php if (!empty($_SESSION['MANAGE_TASKS'])):?>
+              <?php if (SessionHandler::canLoggedInUserManageTasks()):?>
                   <li class="nav-item">
                     <a class="nav-link" href="/tasks/index">Tasks</a>
                   </li>
               <?php  endif; ?>
-              <?php if (!empty($_SESSION['MANAGE_ROLES'])):?>
+              <?php if (SessionHandler::canLoggedInUserManageRoles()):?>
                   <li class="nav-item">
                     <a class="nav-link" href="/roles/index">Roles</a>
                   </li>
               <?php  endif; ?>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <?= $_SESSION['user_name']; ?>
+                  <?= SessionHandler::getLoggedInUserName(); ?>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                   <a class="dropdown-item" href="/logout">Logout</a>

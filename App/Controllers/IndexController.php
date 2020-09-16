@@ -5,29 +5,28 @@ namespace App\Controllers;
 use Core\View;
 use App\Models\User;
 use App\Models\Task;
+use Core\SessionHandler;
+use App\Repositories\DB\TaskRepository;
+use App\Repositories\DB\UserRepository;
 
 class IndexController {
 
     public function index()
     {
-        if(session_status() !== PHP_SESSION_ACTIVE)
-            session_start();
-
         $tasks=[];
         $teamMembers=[];
-        if (isset($_SESSION["id"]))
-        {
-            $sqlParams['user_id']=$_SESSION["id"];
-            $tasks = Task::getDB()->read(Task::getTableName(),$sqlParams,Task::class);
+        $loggedInUserId = SessionHandler::getLoggedInUserId();
 
-            $user = User::getDB()->readById(User::getTableName(),$_SESSION["id"],User::class);
-            $teamMembers=[];
-            if ($user->isTeamLeader())
-            {
-                $sqlParams=[];
-                $sqlParams['team_leader_id']=$_SESSION["id"];
-                $teamMembers = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
-            }
+        $taskRepository = new TaskRepository();
+        $tasks= $taskRepository->findAllBy('user_id',$loggedInUserId);
+
+        $userRepository = new UserRepository();
+        $user = $userRepository->find($loggedInUserId);
+
+        $teamMembers=[];
+        if ($user->isTeamLeader())
+        {
+            $teamMembers= $userRepository->findAllBy('team_leader_id',$loggedInUserId);
         }
 
         View::render("index.view.php",["tasks" => $tasks,"teamMembers" => $teamMembers]);

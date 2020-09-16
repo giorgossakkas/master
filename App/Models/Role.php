@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Repositories\DB\RoleRepository;
+
 class Role extends Model
 {
 
@@ -70,44 +72,5 @@ class Role extends Model
 
       return $errorMessages;
   }
-
-  public function create()
-  {
-      parent::create();
-      if (count($this->getPermissions())>0)
-      {
-          //reload user to get the id
-          $sqlParams['name']=$this->getName();
-          $roles = Role::getDB()->read(Role::getTableName(),$sqlParams,Role::class);
-          $role = $roles[0];
-          foreach ($this->getPermissions() as $permission)
-          {
-              $permission->setRoleId($role->getId());
-              $permission->create();
-          }
-      }
-  }
-
-  public function update()
-  {
-      parent::update();
-      if (count($this->getPermissions())>0)
-      {
-          foreach ($this->getPermissions() as $permission)
-          {
-              $permission->setRoleId($this->getId());
-              $permission->create();
-          }
-      }
-
-      if (count($this->getPermissionsToRemove())>0)
-      {
-          foreach ($this->getPermissionsToRemove() as $permission)
-          {
-              Permission::getDB()->delete(Permission::getTableName(),$permission->getId());
-          }
-      }
-  }
-
 
 }

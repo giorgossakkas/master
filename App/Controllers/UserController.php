@@ -3,33 +3,40 @@
 namespace App\Controllers;
 
 use Core\View;
+use Core\SessionHandler;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Enum\UserPermissionsEnum;
+use App\Repositories\DB\UserRepository;
+use App\Repositories\DB\RoleRepository;
+use App\Repositories\DB\TaskRepository;
 
 class UserController {
 
   public function index()
   {
-      $sqlParams['is_team_leader']=0;
-      $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+      $userRepository = new UserRepository();
+      $users= $userRepository->findAllBy('is_team_leader',0);
 
       View::render("users/index.view.php",["users" => $users]);
   }
 
   public function viewTeamLeaders()
   {
-      $sqlParams['is_team_leader']=1;
-      $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+      $userRepository = new UserRepository();
+      $users= $userRepository->findAllBy('is_team_leader',1);
 
       View::render("users/leaders.view.php",["users" => $users]);
   }
 
   public function create()
   {
-      $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
-      $users = User::getDB()->readAll(User::getTableName(),User::class);
+      $roleRepository = new RoleRepository();
+      $roles= $roleRepository->getAll();
+      $userRepository = new UserRepository();
+      $users= $userRepository->findAllBy('is_team_leader',1);
       View::render("users/create.view.php",["roles" => $roles,"users" => $users]);
   }
 
@@ -42,9 +49,12 @@ class UserController {
   {
       if (isset($id))
       {
-          $user = User::getDB()->readById(User::getTableName(),$id,User::class);
-          $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
-          $users = User::getDB()->readAll(User::getTableName(),User::class);
+          $userRepository = new UserRepository();
+          $user = $userRepository->find($id);
+          $users= $userRepository->findAllBy('is_team_leader',1);
+
+          $roleRepository = new RoleRepository();
+          $roles= $roleRepository->getAll();
 
           View::render("users/edit.view.php",["user" => $user, "roles" => $roles, "users" => $users]);
       }
@@ -54,11 +64,11 @@ class UserController {
   {
       if (isset($id))
       {
-          $query = User::getDB();
-          $user = $query->readById(User::getTableName(),$id,User::class);
+          $userRepository = new UserRepository();
+          $user = $userRepository->find($id);
 
-          $sqlParams['user_id']=$user->getId();
-          $tasks = $query->read(Task::getTableName(),$sqlParams,Task::class);
+          $taskRepository = new TaskRepository();
+          $tasks= $taskRepository->findAllBy('user_id',$user->getId());
 
           View::render("users/tasks.view.php",["user" => $user,"tasks" => $tasks]);
       }
@@ -67,22 +77,41 @@ class UserController {
   public function store()
   {
       $user = new User();
-      $user->setUserName($_POST['user_name']);
-      $user->setEmail($_POST['email']);
-      $user->setPassword($_POST['password']);
-      $user->setRoleId($_POST['role_id']);
-      $user->setTeamLeaderId($_POST['team_leader_id']);
+
+      if (isset($_POST['role_id']))
+      {
+          $user->setUserName($_POST['user_name']);
+      }
+      if (isset($_POST['email']))
+      {
+          $user->setEmail($_POST['email']);
+      }
+      if (isset($_POST['password']))
+      {
+          $user->setPassword($_POST['password']);
+      }
+      if (isset($_POST['role_id']))
+      {
+          $user->setRoleId($_POST['role_id']);
+      }
+      if (isset($_POST['team_leader_id']))
+      {
+          $user->setTeamLeaderId($_POST['team_leader_id']);
+      }
       $user->setIsTeamLeader(0);
 
       $messages = $user->validate();
       if (count($messages) > 0)
       {
-          $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
-          $users = User::getDB()->readAll(User::getTableName(),User::class);
+          $roleRepository = new RoleRepository();
+          $roles= $roleRepository->getAll();
+          $userRepository = new UserRepository();
+          $users= $userRepository->findAllBy('is_team_leader',1);
           return View::render("users/create.view.php",["messages" => $messages,"roles" => $roles,"users" => $users]);
       }
 
-      $user->create();
+      $userRepository = new UserRepository();
+      $userRepository->create($user);
 
       $this->setTeamLeader($user);
 
@@ -93,11 +122,14 @@ class UserController {
   {
       if ($user->getTeamLeaderId()!=null)
       {
-          $teamLeader = User::getDB()->readById(User::getTableName(),$user->getTeamLeaderId(),User::class);
+          $userRepository = new UserRepository();
+          $teamLeader = $userRepository->find($user->getTeamLeaderId());
+
           if (! $teamLeader->isTeamLeader())
           {
               $teamLeader->setIsTeamLeader(1);
-              $teamLeader->update();
+
+              $userRepository->update($teamLeader);
           }
       }
   }
@@ -105,10 +137,18 @@ class UserController {
   public function createRegister()
   {
       $user = new User();
-      $user->setUserName($_POST['user_name']);
-      $user->setEmail($_POST['email']);
-      $user->setPassword($_POST['password']);
-
+      if (isset($_POST['user_name']))
+      {
+          $user->setUserName($_POST['user_name']);
+      }
+      if (isset($_POST['email']))
+      {
+          $user->setEmail($_POST['email']);
+      }
+      if (isset($_POST['password']))
+      {
+          $user->setPassword($_POST['password']);
+      }
       $messages = $user->validateRegistration();
 
       if (count($messages) > 0)
@@ -120,38 +160,29 @@ class UserController {
       $role->setName('Superadmin');
 
       $permissions =[];
-      $permissions[count($permissions)] = $this->addNewPermision('MANAGE_ROLES');
-      $permissions[count($permissions)] = $this->addNewPermision('MANAGE_TEAM_LEADERS');
-      $permissions[count($permissions)] = $this->addNewPermision('MANAGE_USERS');
-      $permissions[count($permissions)] = $this->addNewPermision('MANAGE_TASKS');
-      $permissions[count($permissions)] = $this->addNewPermision('COMPLETE_TASKS');
+      $allPermissions = UserPermissionsEnum::getAllPermissions();
+      foreach($allPermissions as $permission)
+      {
+          $permissions[count($permissions)] = $this->addNewPermision($permission);
+      }
       $role->setPermissions($permissions);
 
-      $role->create();
+      $roleRepository = new RoleRepository();
+      $roleRepository->create($role);
 
-      $sqlParams= [];
-      $sqlParams['name']='Superadmin';
-      $roles = Role::getDB()->read(Role::getTableName(),$sqlParams,Role::class);
-
+      $roleRepository = new RoleRepository();
+      $roles= $roleRepository->findAllBy('name','Superadmin');
 
       $user->setRoleId($roles[0]->getId());
 
-      $user->create();
+      $userRepository = new UserRepository();
+      $userRepository->create($user);
 
-      if(session_status() !== PHP_SESSION_ACTIVE)
-          session_start();
+      $userRepository = new UserRepository();
+      $user= $userRepository->findBy('user_name',$user->getUserName());
 
-      //reload user to get the id
-      $sqlParams= [];
-      $sqlParams['user_name']=$user->getUserName();
-      $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
-      $user = $users[0];
-      $_SESSION["id"] = $user->getId();
-      $_SESSION["user_name"] = $user->getUserName();
-      foreach ($permissions as $permission)
-      {
-          $_SESSION[$permission->getType()] = true;
-      }
+      SessionHandler::create($user,$permissions);
+
       header('Location: /index');
   }
 
@@ -167,22 +198,39 @@ class UserController {
   {
     if (isset($id))
     {
-        $user = User::getDB()->readById(User::getTableName(),$id,User::class);
+        $userRepository = new UserRepository();
+        $user = $userRepository->find($id);
 
-        $user->setUserName($_POST['user_name']);
-        $user->setEmail($_POST['email']);
-        $user->setRoleId($_POST['role_id']);
-        $user->setTeamLeaderId($_POST['team_leader_id']);
+        if (isset($_POST['user_name']))
+        {
+            $user->setUserName($_POST['user_name']);
+        }
+        if (isset($_POST['email']))
+        {
+            $user->setEmail($_POST['email']);
+        }
+        if (isset($_POST['role_id']))
+        {
+            $user->setRoleId($_POST['role_id']);
+        }
+        if (isset($_POST['team_leader_id']))
+        {
+            $user->setTeamLeaderId($_POST['team_leader_id']);
+        }
 
         $messages = $user->validate();
         if (count($messages) > 0)
         {
-            $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
-            $users = User::getDB()->readAll(User::getTableName(),User::class);
+            $users= $userRepository->findAllBy('is_team_leader',1);
+
+            $roleRepository = new RoleRepository();
+            $roles= $roleRepository->getAll();
+
             return View::render("users/edit.view.php", ["messages" => $messages,"user" => $user,"roles" => $roles,"users" => $users]);
         }
 
-        $user->update();
+        $userRepository = new UserRepository();
+        $userRepository->update($user);
 
         $this->setTeamLeader($user);
 
@@ -194,7 +242,8 @@ class UserController {
   {
     if (isset($id))
     {
-        User::getDB()->delete(User::getTableName(),$id);
+        $userRepository = new UserRepository();
+        $userRepository->delete($id);
         header('Location: /users/index');
     }
   }

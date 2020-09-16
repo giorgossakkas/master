@@ -2,6 +2,8 @@
 
 namespace Core;
 
+use Core\SessionHandler;
+
 class Router
 {
     protected $routes = [
@@ -71,18 +73,12 @@ class Router
 
     private function isRouteAllowed($permision)
     {
-        if(session_status() !== PHP_SESSION_ACTIVE)
-            session_start();
-
-        if (empty($permision))
+        if (empty($permision) || SessionHandler::canUserPerformAction($permision))
         {
               return true;
         }
-        else if (empty($_SESSION[$permision]))
-        {
-              return false;
-        }
-        return true;
+
+        return false;
     }
 
     private function getMatchingRoute($uri,$requestType)

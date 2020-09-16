@@ -1,5 +1,6 @@
 <?php
 require "../App/Views/header.view.php";
+use Core\SessionHandler;
 ?>
 
 <a href="/tasks/create" class="btn btn-primary float-right" />New task</a>
@@ -35,23 +36,23 @@ require "../App/Views/header.view.php";
       <td>
         <?php if (!$task->isAssigned()): ?>
            <span class="badge-pill badge-danger">Un-Assigned</span>
-           <?php if (!empty($_SESSION['MANAGE_TASKS'])):?>
+           <?php if (SessionHandler::canLoggedInUserManageTasks()):?>
               <a class="btn btn-primary" href="/tasks/<?php echo $task->getId(); ?>/assign">Assign</a>
            <?php endif; ?>
         <?php else: ?>
            <span class="badge-pill badge-warning">Assigned</span>
-           <?php if (!empty($_SESSION['MANAGE_TASKS']) && !$task->isCompleted()):?>
+           <?php if (SessionHandler::canLoggedInUserManageTasks() && !$task->isCompleted()):?>
               <a class="btn btn-primary" href="/tasks/<?php echo $task->getId(); ?>/unassign">Unassign</a>
            <?php endif; ?>
         <?php endif; ?>
       </td>
       <td>
-          <?php if (!empty($_SESSION['MANAGE_TASKS'])):?>
+          <?php if (SessionHandler::canLoggedInUserManageTasks()):?>
               <a class="btn btn-primary" href="/tasks/<?php echo $task->getId(); ?>/edit">Update</a>
            <?php endif; ?>
       </td>
       <td>
-          <?php if (!empty($_SESSION['MANAGE_TASKS'])):?>
+          <?php if (SessionHandler::canLoggedInUserManageTasks()):?>
               <a class="btn btn-danger" href="/tasks/<?php echo $task->getId(); ?>/delete">Delete</a>
            <?php endif; ?>
       </td>

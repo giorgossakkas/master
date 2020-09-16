@@ -5,29 +5,36 @@ namespace App\Controllers;
 use Core\View;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Enum\UserPermissionsEnum;
+use App\Repositories\DB\RoleRepository;
+use App\Repositories\DB\PermissionRepository;
 
 class RoleController {
 
   public function index()
   {
-      $query = Role::getDB();
-      $roles = $query->readAll(Role::getTableName(),Role::class);
+      $roleRepository = new RoleRepository();
+      $roles= $roleRepository->getAll();
 
       View::render("roles/index.view.php",["roles" => $roles]);
   }
 
   public function create()
   {
-      View::render("roles/create.view.php");
+      $allPermissions = UserPermissionsEnum::getAllPermissions();
+      View::render("roles/create.view.php",["allPermissions" => $allPermissions]);
   }
 
   public function edit($id)
   {
       if (isset($id))
       {
-          $role = Role::getDB()->readById(Role::getTableName(),$id,Role::class);
-          $sqlParams['role_id']=$id;
-          $permissions = Permission::getDB()->read(Permission::getTableName(),$sqlParams,Permission::class);
+          $allPermissions = UserPermissionsEnum::getAllPermissions();
+          $roleRepository = new RoleRepository();
+          $role = $roleRepository->find($id);
+
+          $permissionRepository = new PermissionRepository();
+          $permissions= $permissionRepository->findAllBy('role_id',$id);
 
           $permissionsArray=[];
           if (count($permissions)>0)
@@ -37,44 +44,35 @@ class RoleController {
                   $permissionsArray[$permission->getType()] = true;
               }
           }
-          View::render("roles/edit.view.php",["role" => $role,"permissions" => $permissionsArray]);
+          View::render("roles/edit.view.php",["role" => $role,"permissions" => $permissionsArray,"allPermissions" => $allPermissions]);
       }
   }
 
   public function store()
   {
       $role = new Role();
-      $role->setName($_POST['name']);
-
+      if (isset($_POST['name']))
+      {
+          $role->setName($_POST['name']);
+      }
       $permissions =[];
-      if (isset($_POST['MANAGE_ROLES']))
+      $allPermissions = UserPermissionsEnum::getAllPermissions();
+      foreach($_POST as $permission => $value)
       {
-          $permissions[count($permissions)] = $this->addNewPermision('MANAGE_ROLES');
-      }
-      if (isset($_POST['MANAGE_TEAM_LEADERS']))
-      {
-          $permissions[count($permissions)] = $this->addNewPermision('MANAGE_TEAM_LEADERS');
-      }
-      if (isset($_POST['MANAGE_USERS']))
-      {
-          $permissions[count($permissions)] = $this->addNewPermision('MANAGE_USERS');
-      }
-      if (isset($_POST['MANAGE_TASKS']))
-      {
-          $permissions[count($permissions)] = $this->addNewPermision('MANAGE_TASKS');
-      }
-      if (isset($_POST['COMPLETE_TASKS']))
-      {
-          $permissions[count($permissions)] = $this->addNewPermision('COMPLETE_TASKS');
+          if(in_array($permission, $allPermissions))
+          {
+              $permissions[count($permissions)] = $this->addNewPermision($permission);
+          }
       }
       $role->setPermissions($permissions);
       $messages = $role->validate();
       if (count($messages) > 0)
       {
-          return View::render("roles/create.view.php", ["messages" => $messages]);
+          $allPermissions = UserPermissionsEnum::getAllPermissions();
+          return View::render("roles/create.view.php", ["messages" => $messages,"allPermissions" => $allPermissions]);
       }
-
-      $role->create();
+      $roleRepository = new RoleRepository();
+      $roleRepository->create($role);
       header('Location: /roles/index');
   }
 
@@ -91,63 +89,40 @@ class RoleController {
 
     if (isset($id))
     {
-        $role = Role::getDB()->readById(Role::getTableName(),$id,Role::class);
-        $role->setName($_POST['name']);
+        $roleRepository = new RoleRepository();
+        $role = $roleRepository->find($id);
+        if (isset($_POST['name']))
+        {
+            $role->setName($_POST['name']);
+        }
 
         $messages = $role->validate();
         if (count($messages) > 0)
         {
-            return View::render("roles/edit.view.php", ["messages" => $messages,"role" => $role]);
+            $allPermissions = UserPermissionsEnum::getAllPermissions();
+            return View::render("roles/edit.view.php", ["messages" => $messages,"role" => $role,"allPermissions" => $allPermissions]);
         }
 
-        $sqlParams['role_id']=$id;
-        $permissions = Permission::getDB()->read(Permission::getTableName(),$sqlParams,Permission::class);
+        $permissionRepository = new PermissionRepository();
+        $permissions= $permissionRepository->findAllBy('role_id',$id);
 
         $permissionsToRemove=[];
         $permissionsToCreate=[];
 
-        if (isset($_POST['MANAGE_ROLES']) && $this->getPermission($permissions,'MANAGE_ROLES') == null)
+        $allPermissions = UserPermissionsEnum::getAllPermissions();
+        foreach($_POST as $permission => $value)
         {
-            $permissionsToCreate[count($permissionsToCreate)] = $this->addNewPermision('MANAGE_ROLES');
-        }
-        if (isset($_POST['MANAGE_TEAM_LEADERS']) && $this->getPermission($permissions,'MANAGE_TEAM_LEADERS') == null)
-        {
-            $permissionsToCreate[count($permissionsToCreate)] = $this->addNewPermision('MANAGE_TEAM_LEADERS');
-        }
-        if (isset($_POST['MANAGE_USERS']) && $this->getPermission($permissions,'MANAGE_USERS') == null)
-        {
-            $permissionsToCreate[count($permissionsToCreate)] = $this->addNewPermision('MANAGE_USERS');
-        }
-        if (isset($_POST['MANAGE_TASKS']) && $this->getPermission($permissions,'MANAGE_TASKS') == null)
-        {
-            $permissionsToCreate[count($permissionsToCreate)] = $this->addNewPermision('MANAGE_TASKS');
-        }
-        if (isset($_POST['COMPLETE_TASKS']) && $this->getPermission($permissions,'COMPLETE_TASKS') == null)
-        {
-            $permissionsToCreate[count($permissionsToCreate)] = $this->addNewPermision('COMPLETE_TASKS');
+           if(in_array($permission, $allPermissions) && $this->getPermission($permissions,$permission) == null )
+           {
+                $permissionsToCreate[count($permissionsToCreate)] = $this->addNewPermision($permission);
+           }
         }
 
         if (count($permissions)>0)
         {
             foreach ($permissions as $permission)
             {
-              if (! isset($_POST['MANAGE_ROLES']) && $permission->getType() == 'MANAGE_ROLES')
-              {
-                  $permissionsToRemove[count($permissionsToRemove)] =$permission;
-              }
-              if (! isset($_POST['MANAGE_TEAM_LEADERS']) && $permission->getType() == 'MANAGE_TEAM_LEADERS')
-              {
-                  $permissionsToRemove[count($permissionsToRemove)] =$permission;
-              }
-              if (! isset($_POST['MANAGE_USERS']) && $permission->getType() == 'MANAGE_USERS')
-              {
-                  $permissionsToRemove[count($permissionsToRemove)] =$permission;
-              }
-              if (! isset($_POST['MANAGE_TASKS']) && $permission->getType() == 'MANAGE_TASKS')
-              {
-                  $permissionsToRemove[count($permissionsToRemove)] =$permission;
-              }
-              if (! isset($_POST['COMPLETE_TASKS']) && $permission->getType() == 'COMPLETE_TASKS')
+              if (! isset($_POST[$permission->getType()]))
               {
                   $permissionsToRemove[count($permissionsToRemove)] =$permission;
               }
@@ -156,7 +131,10 @@ class RoleController {
 
         $role->setPermissions($permissionsToCreate);
         $role->setPermissionsToRemove($permissionsToRemove);
-        $role->update();
+
+        $roleRepository = new RoleRepository();
+        $roleRepository->update($role);
+
         header('Location: /roles/index');
       }
 
@@ -181,16 +159,17 @@ class RoleController {
   {
     if (isset($id))
     {
-        Role::getDB()->delete(Role::getTableName(),$id);
+        $roleRepository = new RoleRepository();
+        $roleRepository->delete($id);
 
-        $sqlParams['role_id']=$id;
-        $permissions = Permission::getDB()->read(Permission::getTableName(),$sqlParams,Permission::class);
+        $permissionRepository = new PermissionRepository();
+        $permissions= $permissionRepository->findAllBy('role_id',$id);
 
         if (count($permissions)>0)
         {
             foreach ($permissions as $permission)
             {
-                Permission::getDB()->delete(Permission::getTableName(),$permission->getId());
+                $permissionRepository->delete($permission->getId());
             }
         }
 

@@ -7,13 +7,15 @@ use App\Models\User;
 use App\Models\Task;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Repositories\DB\UserRepository;
+use App\Repositories\DB\RoleRepository;
 
 class TeamLeaderController {
 
   public function index()
   {
-      $sqlParams['is_team_leader']=1;
-      $users = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+      $userRepository = new UserRepository();
+      $users= $userRepository->findAllBy('is_team_leader',1);
 
       View::render("leaders/index.view.php",["users" => $users]);
   }
@@ -21,7 +23,9 @@ class TeamLeaderController {
 
   public function create()
   {
-      $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
+      $roleRepository = new RoleRepository();
+      $roles= $roleRepository->getAll();
+
       View::render("leaders/create.view.php",["roles" => $roles]);
   }
 
@@ -29,8 +33,11 @@ class TeamLeaderController {
   {
       if (isset($id))
       {
-          $user = User::getDB()->readById(User::getTableName(),$id,User::class);
-          $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
+          $userRepository = new UserRepository();
+          $user = $userRepository->find($id);
+
+          $roleRepository = new RoleRepository();
+          $roles= $roleRepository->getAll();
 
           View::render("leaders/edit.view.php",["user" => $user, "roles" => $roles]);
       }
@@ -40,9 +47,10 @@ class TeamLeaderController {
   {
       if (isset($id))
       {
-          $teamLeader = User::getDB()->readById(User::getTableName(),$id,User::class);
-          $sqlParams['team_leader_id']=$id;
-          $teamMembers = User::getDB()->read(User::getTableName(),$sqlParams,User::class);
+          $userRepository = new UserRepository();
+          $teamLeader = $userRepository->find($id);
+
+          $teamMembers= $userRepository->findAllBy('team_leader_id',$id);
 
           View::render("leaders/team.view.php",["teamLeader" => $teamLeader, "teamMembers" => $teamMembers]);
       }
@@ -51,20 +59,35 @@ class TeamLeaderController {
   public function store()
   {
       $user = new User();
-      $user->setUserName($_POST['user_name']);
-      $user->setEmail($_POST['email']);
-      $user->setPassword($_POST['password']);
-      $user->setRoleId($_POST['role_id']);
+      if (isset($_POST['user_name']))
+      {
+          $user->setUserName($_POST['user_name']);
+      }
+      if (isset($_POST['email']))
+      {
+          $user->setEmail($_POST['email']);
+      }
+      if (isset($_POST['password']))
+      {
+          $user->setPassword($_POST['password']);
+      }
+      if (isset($_POST['role_id']))
+      {
+          $user->setRoleId($_POST['role_id']);
+      }
+
       $user->setIsTeamLeader(1);
 
       $messages = $user->validate();
       if (count($messages) > 0)
       {
-          $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
+          $roleRepository = new RoleRepository();
+          $roles= $roleRepository->getAll();
           return View::render("leaders/create.view.php", ["messages" => $messages,"roles" => $roles]);
       }
 
-      $user->create();
+      $userRepository = new UserRepository();
+      $userRepository->create($user);
 
       header('Location: /leaders/index');
   }
@@ -73,20 +96,32 @@ class TeamLeaderController {
   {
     if (isset($id))
     {
-        $user = User::getDB()->readById(User::getTableName(),$id,User::class);
+        $userRepository = new UserRepository();
+        $user = $userRepository->find($id);
 
-        $user->setUserName($_POST['user_name']);
-        $user->setEmail($_POST['email']);
-        $user->setRoleId($_POST['role_id']);
+        if (isset($_POST['user_name']))
+        {
+            $user->setUserName($_POST['user_name']);
+        }
+        if (isset($_POST['email']))
+        {
+            $user->setEmail($_POST['email']);
+        }
+        if (isset($_POST['role_id']))
+        {
+            $user->setRoleId($_POST['role_id']);
+        }
 
         $messages = $user->validate();
         if (count($messages) > 0)
         {
-            $roles = Role::getDB()->readAll(Role::getTableName(),Role::class);
+            $roleRepository = new RoleRepository();
+            $roles= $roleRepository->getAll();
             return View::render("leaders/edit.view.php", ["messages" => $messages,"user" => $user,"roles" => $roles]);
         }
 
-        $user->update();
+        $userRepository = new UserRepository();
+        $userRepository->update($user);
 
         header('Location: /leaders/index');
       }
@@ -96,7 +131,9 @@ class TeamLeaderController {
   {
     if (isset($id))
     {
-        User::getDB()->delete(User::getTableName(),$id);
+        $userRepository = new UserRepository();
+        $userRepository->delete($id);
+
         header('Location: /leaders/index');
     }
   }

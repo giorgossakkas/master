@@ -1,5 +1,6 @@
 <?php
 require "../App/Views/header.view.php";
+use Core\SessionHandler;
 ?>
 
 <?php if (count($teamMembers) > 0):?>
@@ -54,7 +55,7 @@ require "../App/Views/header.view.php";
            <span class="badge-pill badge-success">Completed</span>
         <?php else: ?>
            <span class="badge-pill badge-warning">Work in progress</span>
-           <?php if (!empty($_SESSION['COMPLETE_TASKS'])):?>
+           <?php if (SessionHandler::canLoggedInUserCompleteTasks()):?>
               <a class="btn btn-primary" href="tasks/<?php echo $task->getId(); ?>/complete">Complete</a>
            <?php endif; ?>
         <?php endif; ?>
