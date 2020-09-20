@@ -2,75 +2,62 @@
 
 namespace App\Models;
 
-use App\Repositories\DB\RoleRepository;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
+    use HasFactory;
 
-  private $id;
-  private $name;
-  private $permissions;
-  private $permissionsToRemove;
+    private $permissions;
+    private $permissionsToRemove;
 
-  public function getId()
-  {
-      return $this->id;
-  }
+    protected $fillable = [
+        'name'
+    ];
 
-  public function setId($id)
-  {
-      $this->id = $id;
-  }
-  public function getName()
-  {
-      return $this->name;
-  }
+    public function permissions()
+    {
+        return $this->hasMany(Permission::class);
+    }
 
-  public function setName($name)
-  {
-      $this->name = $name;
-  }
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 
-  public function getPermissions()
-  {
-      return $this->permissions;
-  }
+    public function setPermissions($permissions)
+    {
+        $this->permissions =$permissions;
+    }
 
-  public function setPermissions($permissions)
-  {
-      $this->permissions = $permissions;
-  }
+    public function getPermissions()
+    {
+        return $this->permissions;
+    }
 
-  public function getPermissionsToRemove()
-  {
-      return $this->permissionsToRemove;
-  }
+    public function setPermissionsToRemove($permissionsToRemove)
+    {
+        $this->permissionsToRemove =$permissionsToRemove;
+    }
 
-  public function setPermissionsToRemove($permissionsToRemove)
-  {
-      $this->permissionsToRemove = $permissionsToRemove;
-  }
+    public function getPermissionsToRemove()
+    {
+        return $this->permissionsToRemove;
+    }
 
-  public function toArray () {
-      return [
-          "id" => $this->getId(),
-          "name" => $this->getName()
-      ];
-  }
+    public function isPermissionEnable($permissionType)
+    {
+        foreach ($this->getPermissions() as $permission)
+        {
+            if ($permission->type == $permissionType)
+            {
+                  return true;
+            }
+        }
 
-  public function getTableName(){
-      return "ROLES";
-  }
+        return false;
 
-  public function validate(){
-      $errorMessages = [];
-      if ($this->getName() == null)
-      {
-          $message = "Please specify name";
-          $errorMessages[count($errorMessages)] = $message;
-      }
-
-      return $errorMessages;
-  }
+    }
 
 }
