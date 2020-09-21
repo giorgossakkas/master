@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -40,6 +41,23 @@ class User extends Authenticatable
 
     public function role()
     {
-        return $this->hasOne(Role::class);
+        return $this->belongsTo(Role::class, 'role_id', 'id');
+    }
+
+    public function isEnable($perm = null)
+    {
+         if(is_null($perm))
+         {
+              return false;
+         }
+         $perms = $this->role->permissions;
+         foreach ($perms as $permission)
+         {
+              if ($permission->type === $perm)
+              {  
+                  return true;
+              }
+         }
+         return false;
     }
 }
