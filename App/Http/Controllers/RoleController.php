@@ -58,7 +58,7 @@ class RoleController extends Controller
                 $permissions[count($permissions)] = $permission;
             }
         }
-        $role->setPermissions($permissions);
+        $role->setPermissionsToCreate($permissions);
 
         $roleRepository = new RoleRepository();
         $role = $roleRepository->create($role);
@@ -77,7 +77,7 @@ class RoleController extends Controller
 
           $role->name=$request->get('name');
 
-          $permissions= $role->getPermissions();
+          $permissions= $role->permissions;
 
           $permissionsToRemove=[];
           $permissionsToCreate=[];
@@ -104,7 +104,7 @@ class RoleController extends Controller
               }
           }
 
-          $role->setPermissions($permissionsToCreate);
+          $role->setPermissionsToCreate($permissionsToCreate);
           $role->setPermissionsToRemove($permissionsToRemove);
 
           $roleRepository = new RoleRepository();

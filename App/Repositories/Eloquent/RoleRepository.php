@@ -19,8 +19,6 @@ class RoleRepository implements EloquentRepositoryInterface
     {
         $role =  Role::find($id);
 
-        $role->setPermissions(Permission::where('role_id', $id)->get());
-
         return $role;
     }
 
@@ -38,9 +36,9 @@ class RoleRepository implements EloquentRepositoryInterface
     {
         $role->save();
 
-        if (count($role->getPermissions()) > 0)
+        if (count($role->getPermissionsToCreate()) > 0)
         {
-            $role->permissions()->saveMany($role->getPermissions());
+            $role->permissions()->saveMany($role->getPermissionsToCreate());
         }
 
         return $role;
@@ -50,9 +48,9 @@ class RoleRepository implements EloquentRepositoryInterface
     {
         $role->update();
 
-        if (count($role->getPermissions()) > 0)
+        if (count($role->getPermissionsToCreate()) > 0)
         {
-            $role->permissions()->saveMany($role->getPermissions());
+            $role->permissions()->saveMany($role->getPermissionsToCreate());
         }
 
         if (count($role->getPermissionsToRemove()) > 0)

@@ -9,7 +9,7 @@ class Role extends Model
 {
     use HasFactory;
 
-    private $permissions;
+    private $permissionsToCreate;
     private $permissionsToRemove;
 
     protected $fillable = [
@@ -26,14 +26,14 @@ class Role extends Model
         return $this->hasMany(User::class);
     }
 
-    public function setPermissions($permissions)
+    public function setPermissionsToCreate($permissionsToCreate)
     {
-        $this->permissions =$permissions;
+        $this->permissionsToCreate =$permissionsToCreate;
     }
 
-    public function getPermissions()
+    public function getPermissionsToCreate()
     {
-        return $this->permissions;
+        return $this->permissionsToCreate;
     }
 
     public function setPermissionsToRemove($permissionsToRemove)
@@ -48,7 +48,7 @@ class Role extends Model
 
     public function isPermissionEnable($permissionType)
     {
-        foreach ($this->getPermissions() as $permission)
+        foreach ($this->permissions as $permission)
         {
             if ($permission->type == $permissionType)
             {
