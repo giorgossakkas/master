@@ -3,7 +3,7 @@
 @section('content')
 
 
-<a href="/roles/create" class="btn btn-primary float-right" />New role</a>
+<a href="{{ route('role_create') }}" class="btn btn-primary float-right" />New role</a>
 
 <h2>Roles</h2>
 <table class="table">
@@ -21,10 +21,10 @@
           <th scope="row"><?php echo $key+1 ?></th>
           <td>{{ $role->name }}</td>
           <td>
-              <a class="btn btn-primary" href="../roles/{{ $role->id }}/edit">Update</a>
+              <a class="btn btn-primary" href="{{ route('role_edit',['id' => $role->id ]) }}">Update</a>
           </td>
           <td>
-              <form action="/roles/{{ $role->id }}" method="post">
+              <form action="{{ route('role_delete',['id' => $role->id ]) }}" method="post">
                   @csrf
                   {{ method_field('delete') }}
                   <button class="btn btn-danger" type="submit">Delete</button>

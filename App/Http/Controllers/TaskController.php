@@ -7,136 +7,166 @@ use App\Repositories\Eloquent\TaskRepository;
 use App\Repositories\Eloquent\UserRepository;
 use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\TaskStatusEnum;
 
 
 class TaskController extends Controller
 {
-  public function __construct()
-  {
-      $this->middleware('auth');
-  }
+    private $taskRepository;
+    private $userRepository;
+
+    public function __construct()
+    {
+        $this->taskRepository = app(TaskRepository::class);
+        $this->userRepository = app(UserRepository::class);
+    }
 
 
-  public function index()
-  {
-      $taskRepository = new TaskRepository();
-      $user = Auth::user();
-      $tasks= $taskRepository->findAllBy('owner_user_id',$user->id);
+    public function index()
+    {
+        $user = Auth::user();
+        $tasks= $this->taskRepository->findAllBy('owner_user_id',$user->id);
 
-      return view('tasks.index',compact("tasks"));
-  }
+        return view('tasks.index',compact("tasks"));
+    }
 
-  public function onAssign($id)
-  {
-       $taskRepository = new TaskRepository();
-       $task= $taskRepository->find($id);
+    public function onAssign($id)
+    {
+         $task= $this->taskRepository->find($id);
 
-       $userRepository = new UserRepository();
-       $user = Auth::user();
-       $users= $userRepository->findAllBy('team_leader_id',$user->id);
+         if ($task!=null)
+         {
+             $user = Auth::user();
+             $users= $this->userRepository->findAllBy('team_leader_id',$user->id);
 
-       return view('tasks.assign',compact("task","users"));
-   }
+             return view('tasks.assign',compact("task","users"));
+          }
+          else
+          {
+              return redirect()->route('task_index')->withErrors("Task with id ". $id ." not found");
+          }
+     }
 
-   public function assign(Request $request,$id)
-   {
-       $this->validate($request, [
-           'assign_to_user_id' => ['required']
-       ]);
+     public function assign(Request $request,$id)
+     {
+         $this->validate($request, [
+             'assign_to_user_id' => ['required']
+         ]);
 
-       $taskRepository = new TaskRepository();
 
-       $task = $taskRepository->find($id);
+         $task = $this->taskRepository->find($id);
 
-       $task->assign_to_user_id =  $request->get('assign_to_user_id');
+         if ($task!=null)
+         {
+             $task->assign_to_user_id =  $request->get('assign_to_user_id');
 
-       $task = $taskRepository->update($task);
+             $task = $this->taskRepository->update($task);
 
-       return redirect('/tasks/index');
-  }
+             return redirect('/tasks/index');
+         }
+         else
+         {
+             return redirect()->route('task_index')->withErrors("Task with id ". $id ." not found");
+         }
+    }
 
-  public function unassign($id)
-  {
-      $taskRepository = new TaskRepository();
+    public function unassign($id)
+    {
+        $task = $this->taskRepository->find($id);
 
-      $task = $taskRepository->find($id);
+        if ($task!=null)
+        {
+            $task->assign_to_user_id =  null;
 
-      $task->assign_to_user_id =  null;
+            $task = $this->taskRepository->update($task);
 
-      $task = $taskRepository->update($task);
+            return redirect()->route('task_index');
+        }
+        else
+        {
+            return redirect()->route('task_index')->withErrors("Task with id ". $id ." not found");
+        }
+    }
 
-      return redirect('/tasks/index');
-  }
+    public function complete($id)
+    {
+        $task = $this->taskRepository->find($id);
+        if ($task!=null)
+        {
+            $task->status = TaskStatusEnum::COMPLETED;
 
-  public function complete($id)
-  {
-      $taskRepository = new TaskRepository();
+            $task = $this->taskRepository->update($task);
 
-      $task = $taskRepository->find($id);
+            return redirect()->route('home');
+        }
+        else
+        {
+            return redirect()->route('home')->withErrors("Task with id ". $id ." not found");
+        }
+    }
+    public function create()
+    {
+        return view('tasks.create');
+    }
 
-      $task->status = 'COMPLETED';
+    public function edit($id)
+    {
+        $task = $this->taskRepository->find($id);
+        if ($task!=null)
+        {
+            return view('tasks.edit',compact("task"));
+        }
+        else
+        {
+            return redirect()->route('task_index')->withErrors("Task with id ". $id ." not found");
+        }
+    }
 
-      $task = $taskRepository->update($task);
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'name' => ['required'],
+            'description' => ['required']
+        ]);
 
-      return redirect('/home');
-  }
-  public function create()
-  {
-      return view('tasks.create');
-  }
+        $task = new Task($request->all());
+        $task->status = TaskStatusEnum::PENDING;
+        $user = Auth::user();
+        $task->owner_user_id = $user->id;
 
-  public function edit($id)
-  {
+        $task = $this->taskRepository->create($task);
 
-      $taskRepository = new TaskRepository();
-      $task = $taskRepository->find($id);
+        return redirect()->route('task_index');
+    }
 
-      return view('tasks.edit',compact("task"));
-  }
+    public function update(Request $request,$id)
+    {
+        $this->validate($request, [
+            'name' => ['required'],
+            'description' => ['required']
+        ]);
 
-  public function store(Request $request)
-  {
-      $this->validate($request, [
-          'name' => ['required'],
-          'description' => ['required']
-      ]);
+        $task = $this->taskRepository->find($id);
+        if ($task!=null)
+        {
+            $task->name =  $request->get('name');
+            $task->description =  $request->get('description');
 
-      $task = new Task($request->all());
-      $task->status = "PENDING";
-      $user = Auth::user();
-      $task->owner_user_id = $user->id;
+            $task = $this->taskRepository->update($task);
 
-      $taskRepository = new TaskRepository();
-      $task = $taskRepository->create($task);
+            return redirect()->route('task_index');
+        }
+        else
+        {
+            return redirect()->route('task_index')->withErrors("Task with id ". $id ." not found");
+        }
+    }
 
-      return redirect('/tasks/index');
-  }
+    public function delete($id)
+    {
+        $this->taskRepository->delete($id);
 
-  public function update(Request $request,$id)
-  {
-      $this->validate($request, [
-          'name' => ['required'],
-          'description' => ['required']
-      ]);
-
-      $taskRepository = new TaskRepository();
-
-      $task = $taskRepository->find($id);
-
-      $task->name =  $request->get('name');
-      $task->description =  $request->get('description');
-
-      $task = $taskRepository->update($task);
-
-      return redirect('/tasks/index');
-  }
-
-  public function delete($id)
-  {
-      $taskRepository = new TaskRepository();
-      $taskRepository->delete($id);
-
-      return redirect('/tasks/index');
-  }
+        return redirect()->route('task_index');
+    }
 
 }

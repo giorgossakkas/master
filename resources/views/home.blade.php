@@ -20,7 +20,7 @@
       <td>{{ $user->name }}</td>
       <td>{{ $user->email }}</td>
       <td>
-          <a class="btn btn-primary"  href="/users/{{ $user->id }}/tasks">View</a>
+          <a class="btn btn-primary"  href="{{ route('user_show_user_tasks',['id' => $user->id ]) }}">View</a>
       </td>
     </tr>
     @endforeach
@@ -46,10 +46,10 @@
       <td>{{ $task->name }}</td>
       <td>{{ $task->description }}</td>
       <td>
-        @if ($task->status === 'COMPLETED')
+        @if ($task->isCompleted())
            <span class="badge-pill badge-success">Completed</span>
         @else
-            <form action="/tasks/{{ $task->id }}/complete" method="post">
+            <form action="{{ route('task_complete',['id' => $task->id ]) }}" method="post">
                 @csrf
                 <span class="badge-pill badge-warning">Work in progress</span>
                 <button class="btn btn-primary" type="submit">Complete</button>

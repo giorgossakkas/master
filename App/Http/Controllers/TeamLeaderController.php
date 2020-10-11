@@ -10,47 +10,55 @@ use App\Models\User;
 
 class TeamLeaderController extends Controller
 {
+    private $roleRepository;
+    private $userRepository;
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->roleRepository = app(RoleRepository::class);
+        $this->userRepository = app(UserRepository::class);
     }
 
 
     public function index()
     {
-        $userRepository = new UserRepository();
-        $users= $userRepository->findAllBy('is_team_leader','1');
+        $users= $this->userRepository->findAllBy('is_team_leader','1');
 
         return view('teamleaders.index',compact("users"));
     }
 
     public function create()
     {
-        $roleRepository = new RoleRepository();
-        $roles= $roleRepository->getAll();
+        $roles= $this->roleRepository->getAll();
         return view('teamleaders.create',compact("roles"));
     }
 
     public function edit($id)
     {
-
-        $userRepository = new UserRepository();
-        $user = $userRepository->find($id);
-
-        $roleRepository = new RoleRepository();
-        $roles= $roleRepository->getAll();
-        return view('teamleaders.edit',compact("user","roles"));
+        $user = $this->userRepository->find($id);
+        if ($user!=null)
+        {
+            $roles= $this->roleRepository->getAll();
+            return view('teamleaders.edit',compact("user","roles"));
+        }
+        else
+        {
+            return redirect()->route('teamleader_index')->withErrors("Team leader with id ". $id ." not found");
+        }
     }
 
     public function viewTeam($id)
     {
-
-        $userRepository = new UserRepository();
-        $user = $userRepository->find($id);
-
-        $users= $userRepository->findAllBy('team_leader_id',$id);
-        return view('teamleaders.team',compact("user","users"));
+        $user = $this->userRepository->find($id);
+        if ($user!=null)
+        {
+            $users= $this->userRepository->findAllBy('team_leader_id',$id);
+            return view('teamleaders.team',compact("user","users"));
+        }
+        else
+        {
+            return redirect()->route('teamleader_index')->withErrors("Team leader with id ". $id ." not found");
+        }
     }
 
     public function store(Request $request)
@@ -66,10 +74,9 @@ class TeamLeaderController extends Controller
         $user = new User($request->all());
         $user->is_team_leader =1;
 
-        $userRepository = new UserRepository();
-        $user = $userRepository->create($user);
+        $user = $this->userRepository->create($user);
 
-        return redirect('/teamleaders/index');
+        return redirect()->route('teamleader_index');
     }
 
     public function update(Request $request,$id)
@@ -80,25 +87,28 @@ class TeamLeaderController extends Controller
             'role_id' => ['required']
         ]);
 
-        $userRepository = new UserRepository();
+        $user = $this->userRepository->find($id);
+        if ($user!=null)
+        {
+            $user->name =  $request->get('name');
+            $user->email =  $request->get('email');
+            $user->role_id =  $request->get('role_id');
 
-        $user = $userRepository->find($id);
+            $user = $this->userRepository->update($user);
 
-        $user->name =  $request->get('name');
-        $user->email =  $request->get('email');
-        $user->role_id =  $request->get('role_id');
-
-        $user = $userRepository->update($user);
-
-        return redirect('/teamleaders/index');
+            return redirect()->route('teamleader_index');
+        }
+        else
+        {
+            return redirect()->route('teamleader_index')->withErrors("Team leader with id ". $id ." not found");
+        }
     }
 
     public function delete($id)
     {
-        $userRepository = new UserRepository();
-        $userRepository->delete($id);
+        $this->userRepository->delete($id);
 
-        return redirect('/teamleaders/index');
+        return redirect()->route('teamleader_index');
     }
 
 

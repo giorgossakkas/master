@@ -2,7 +2,7 @@
 
 @section('content')
 
-<form action="/tasks/store" method="post">
+<form action="{{ route('task_store') }}" method="post">
   @csrf
   <div class="form-group">
 		<label for="name">Name</label>
@@ -23,7 +23,7 @@
         placeholder="Description" >{{ old('description') }}</textarea>
 	</div>
 
-  <a href="/tasks/index" class="float-right p-2" />Cancel</a>
+  <a href="{{ route('task_index') }}" class="float-right p-2" />Cancel</a>
   <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

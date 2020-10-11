@@ -15,9 +15,9 @@ class CreateTasksTable extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description');
-            $table->string('status');
+            $table->string('name',256);
+            $table->string('description',1024);
+            $table->string('status',32);
             $table->foreignId('assign_to_user_id')->nullable();
             $table->foreign('assign_to_user_id')->references('id')->on('users');
             $table->foreignId('owner_user_id')->nullable();

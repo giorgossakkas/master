@@ -11,28 +11,30 @@ use App\Models\User;
 
 class UserController extends Controller
 {
+    private $roleRepository;
+    private $userRepository;
+    private $taskRepository;
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->taskRepository = app(TaskRepository::class);
+        $this->userRepository = app(UserRepository::class);
+        $this->roleRepository = app(RoleRepository::class);
     }
 
 
     public function index()
     {
-        $userRepository = new UserRepository();
-        $users= $userRepository->findAllBy('is_team_leader','0');
+        $users= $this->userRepository->findAllBy('is_team_leader','0');
 
         return view('users.index',compact("users"));
     }
 
     public function create()
     {
-        $roleRepository = new RoleRepository();
-        $roles= $roleRepository->getAll();
+        $roles= $this->roleRepository->getAll();
 
-        $userRepository = new UserRepository();
-        $teamLeaders= $userRepository->findAllBy('is_team_leader','1');
+        $teamLeaders= $this->userRepository->findAllBy('is_team_leader','1');
 
         return view('users.create',compact("roles","teamLeaders"));
     }
@@ -40,27 +42,34 @@ class UserController extends Controller
     public function edit($id)
     {
 
-        $userRepository = new UserRepository();
-        $user = $userRepository->find($id);
+        $user = $this->userRepository->find($id);
+        if ($user!=null)
+        {
+            $roles= $this->roleRepository->getAll();
 
-        $roleRepository = new RoleRepository();
-        $roles= $roleRepository->getAll();
+            $teamLeaders= $this->userRepository->findAllBy('is_team_leader','1');
 
-        $userRepository = new UserRepository();
-        $teamLeaders= $userRepository->findAllBy('is_team_leader','1');
-
-        return view('users.edit',compact("user","roles","teamLeaders"));
+            return view('users.edit',compact("user","roles","teamLeaders"));
+        }
+        else
+        {
+            return redirect()->route('user_index')->withErrors("User with id ". $id ." not found");
+        }
     }
 
     public function showUserTasks($id)
     {
-        $userRepository = new UserRepository();
-        $user = $userRepository->find($id);
+        $user = $this->userRepository->find($id);
+        if ($user!=null)
+        {
+            $tasks= $this->taskRepository->findAllBy('assign_to_user_id',$user->id);
 
-        $taskRepository = new TaskRepository();
-        $tasks= $taskRepository->findAllBy('assign_to_user_id',$user->id);
-
-        return view('users.tasks',compact("user","tasks"));
+            return view('users.tasks',compact("user","tasks"));
+        }
+        else
+        {
+            return redirect()->route('home')->withErrors("User with id ". $id ." not found");
+        }
     }
 
     public function store(Request $request)
@@ -77,10 +86,9 @@ class UserController extends Controller
         $user = new User($request->all());
         $user->is_team_leader =0;
 
-        $userRepository = new UserRepository();
-        $user = $userRepository->create($user);
+        $user = $this->userRepository->create($user);
 
-        return redirect('/users/index');
+        return redirect()->route('user_index');
     }
 
     public function update(Request $request,$id)
@@ -92,26 +100,29 @@ class UserController extends Controller
             'role_id' => ['required']
         ]);
 
-        $userRepository = new UserRepository();
+        $user = $this->userRepository->find($id);
+        if ($user!=null)
+        {
+            $user->name =  $request->get('name');
+            $user->email =  $request->get('email');
+            $user->role_id =  $request->get('role_id');
+            $user->team_leader_id =  $request->get('team_leader_id');
 
-        $user = $userRepository->find($id);
+            $user = $this->userRepository->update($user);
 
-        $user->name =  $request->get('name');
-        $user->email =  $request->get('email');
-        $user->role_id =  $request->get('role_id');
-        $user->team_leader_id =  $request->get('team_leader_id');
-
-        $user = $userRepository->update($user);
-
-        return redirect('/users/index');
+            return redirect()->route('user_index');
+        }
+        else
+        {
+            return redirect()->route('user_index')->withErrors("User with id ". $id ." not found");
+        }
     }
 
     public function delete($id)
     {
-        $userRepository = new UserRepository();
-        $userRepository->delete($id);
+        $this->userRepository->delete($id);
 
-        return redirect('/users/index');
+        return redirect()->route('user_index');
     }
 
 

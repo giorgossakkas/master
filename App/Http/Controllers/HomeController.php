@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
+
+    private $taskRepository;
+    private $userRepository;
+
     /**
      * Create a new controller instance.
      *
@@ -16,7 +20,8 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->taskRepository = app(TaskRepository::class);
+        $this->userRepository = app(UserRepository::class);
     }
 
     /**
@@ -27,12 +32,10 @@ class HomeController extends Controller
     public function index()
     {
 
-        $taskRepository = new TaskRepository();
         $user = Auth::user();
-        $tasks= $taskRepository->findAllBy('assign_to_user_id',$user->id);
 
-        $userRepository = new UserRepository();
-        $teamMembers= $userRepository->findAllBy('team_leader_id',$user->id);
+        $tasks= $this->taskRepository->findAllBy('assign_to_user_id',$user->id);
+        $teamMembers= $this->userRepository->findAllBy('team_leader_id',$user->id);
 
         return view('home',compact("tasks","teamMembers"));
     }

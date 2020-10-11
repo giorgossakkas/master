@@ -79,7 +79,7 @@ class RegisterController extends Controller
         {
             $permission = new Permission();
             $permission->type = $permissionType;
-            $permissions[count($permissions)] = $permission;
+            $permissions[] = $permission;
         }
 
         $role->setPermissionsToCreate($permissions);

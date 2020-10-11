@@ -2,7 +2,7 @@
 
 @section('content')
 
-<form action="/teamleaders/store" method="post">
+<form action="{{ route('teamleader_store') }}" method="post">
   @csrf
   <div class="form-group">
 		<label for="name">Name</label>
@@ -40,7 +40,7 @@
   <div class="form-group">
       <label for="role_id">Role</label>
       <select class="form-control" id="role_id" name="role_id">
-          <option>Select role</option>
+          <option value="">Select role</option>
           @foreach ($roles as $role)
               <option value="{{ $role->id }}" {{ ( $role->id == old('role_id')) ? 'selected' : '' }}>
                   {{ $role->name }}
@@ -50,7 +50,7 @@
   </div>
 
 
-  <a href="/teamleaders/index" class="float-right p-2" />Cancel</a>
+  <a href="{{ route('teamleader_index') }}" class="float-right p-2" />Cancel</a>
   <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

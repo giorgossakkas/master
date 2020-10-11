@@ -37,16 +37,16 @@
                     <ul class="navbar-nav mr-auto">
                       @auth
                           <li class="nav-item">
-                            <a class="navbar-brand" href="/teamleaders/index">Team Leaders</a>
+                            <a class="navbar-brand" href="{{ route('teamleader_index') }}">Team Leaders</a>
                           </li>
                           <li class="nav-item">
-                            <a class="navbar-brand" href="/users/index">Users</a>
+                            <a class="navbar-brand" href="{{ route('user_index') }}">Users</a>
                           </li>
                           <li class="nav-item">
-                            <a class="navbar-brand" href="/roles/index">Roles</a>
+                            <a class="navbar-brand" href="{{ route('role_index') }}">Roles</a>
                           </li>
                           <li class="nav-item">
-                            <a class="navbar-brand" href="/tasks/index">Tasks</a>
+                            <a class="navbar-brand" href="{{ route('task_index') }}">Tasks</a>
                           </li>
                       @endauth
                     </ul>

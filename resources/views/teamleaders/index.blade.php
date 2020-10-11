@@ -3,7 +3,7 @@
 @section('content')
 
 
-<a href="/teamleaders/create" class="btn btn-primary float-right" />New team leader</a>
+<a href="{{ route('teamleader_create') }}" class="btn btn-primary float-right" />New team leader</a>
 
 <h2>Team Leaders</h2>
 <table class="table">
@@ -24,17 +24,17 @@
           <td>{{ $user->name }}</td>
           <td>{{ $user->email }}</td>
           <td>
-              <a class="btn btn-primary" href="../teamleaders/{{ $user->id }}/edit">Update</a>
+              <a class="btn btn-primary" href="{{ route('teamleader_edit',['id' => $user->id ]) }}">Update</a>
           </td>
           <td>
-              <form action="/teamleaders/{{ $user->id }}" method="post">
+              <form action="{{ route('teamleader_delete',['id' => $user->id ]) }}" method="post">
                   @csrf
                   {{ method_field('delete') }}
                   <button class="btn btn-danger" type="submit">Delete</button>
               </form>
           </td>
           <td>
-              <a class="btn btn-primary" href="../teamleaders/{{ $user->id }}/team">View</a>
+              <a class="btn btn-primary" href="{{ route('teamleader_view_team',['id' => $user->id ]) }}">View</a>
           </td>
         </tr>
       @endforeach

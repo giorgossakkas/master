@@ -6,30 +6,33 @@ use App\Repositories\EloquentRepositoryInterface;
 use App\Models\Role;
 use App\Models\Permission;
 use Core\QueryBuilder;
+use Illuminate\Database\Eloquent\Builder;
 
 class RoleRepository implements EloquentRepositoryInterface
 {
-
+    public function getBasicQuery() : Builder
+    {
+        return Role::query();
+    }
     public function getAll($exclude_admin = false)
     {
-        return Role::all();
+        return $this->getBasicQuery()->get();
     }
 
     public function find($id)
     {
-        $role =  Role::find($id);
-
+        $role = $this->getBasicQuery()->find($id);
         return $role;
     }
 
     public function findBy($field_name, $field_value)
     {
-        return Role::where($field_name, $field_value)->first();
+        return  $this->getBasicQuery()->where($field_name, $field_value)->first();
     }
 
     public function findAllBy($field_name, $field_value)
     {
-        return Role::where($field_name, $field_value)->get();
+        return  $this->getBasicQuery()->where($field_name, $field_value)->get();
     }
 
     public function create($role)

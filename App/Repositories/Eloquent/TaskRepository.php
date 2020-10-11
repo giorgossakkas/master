@@ -5,28 +5,32 @@ namespace App\Repositories\Eloquent;
 use App\Repositories\EloquentRepositoryInterface;
 use App\Models\Task;
 use Core\QueryBuilder;
+use Illuminate\Database\Eloquent\Builder;
 
 class TaskRepository implements EloquentRepositoryInterface
 {
-
+    public function getBasicQuery(): Builder
+    {
+        return Task::query();
+    }
     public function getAll($exclude_admin = false)
     {
-        return Task::all();
+        return $this->getBasicQuery()->get();
     }
 
     public function find($id)
     {
-        return Task::find($id);
+        return $this->getBasicQuery()->find($id);
     }
 
     public function findBy($field_name, $field_value)
     {
-        return Task::where($field_name, $field_value)->first();
+        return $this->getBasicQuery()->where($field_name, $field_value)->first();
     }
 
     public function findAllBy($field_name, $field_value)
     {
-        return Task::where($field_name, $field_value)->get();
+        return $this->getBasicQuery()->where($field_name, $field_value)->get();
     }
 
     public function create($task)

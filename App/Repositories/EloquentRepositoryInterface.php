@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
 * Interface EloquentRepositoryInterface
@@ -20,7 +21,7 @@ interface EloquentRepositoryInterface
 
     public function findAllBy($field_name, $field_value);
 
-    //public function getBasicQuery(): Builder;
+    public function getBasicQuery(): Builder;
 
     public function create($entity);
 

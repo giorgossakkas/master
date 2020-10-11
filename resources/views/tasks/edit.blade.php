@@ -3,7 +3,7 @@
 @section('content')
 
 
-<form action="/tasks/{{ $task->id}}/update" method="post">
+<form action="{{ route('task_update',['id' => $task->id ]) }}" method="post">
     @csrf
     <div class="form-group">
   		<label for="name">Name</label>
@@ -24,7 +24,7 @@
             placeholder="Description">{{  old('description',  $task->description) }}</textarea>
   	</div>
 
-    <a href="/tasks/index" class="float-right p-2" />Cancel</a>
+    <a href="{{ route('task_index') }}" class="float-right p-2" />Cancel</a>
     <button type="submit" class="btn btn-primary float-right" name="update" id="update">Update</button>
 </form>
 @endsection

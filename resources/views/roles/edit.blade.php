@@ -3,7 +3,7 @@
 @section('content')
 
 
-<form action="/roles/{{ $role->id}}/update" method="post">
+<form action="{{ route('role_update',['id' => $role->id ]) }}" method="post">
   @csrf
   <div class="form-group">
 
@@ -35,7 +35,7 @@
   @endforeach
 
 
-  <a href="/roles/index" class="float-right p-2" />Cancel</a>
+  <a href="{{ route('role_index') }}" class="float-right p-2" />Cancel</a>
   <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

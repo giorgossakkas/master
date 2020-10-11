@@ -2,7 +2,7 @@
 
 @section('content')
 
-<form action="/roles/store" method="post">
+<form action="{{ route('role_store') }}" method="post">
   @csrf
   <div class="form-group">
 		<label for="name">Name</label>
@@ -28,7 +28,7 @@
 @endforeach
 
 
-  <a href="/roles/index" class="float-right p-2" />Cancel</a>
+  <a href="{{ route('role_index') }}" class="float-right p-2" />Cancel</a>
   <button type="submit" class="btn btn-primary float-right" name="create" id="create">Create</button>
 </form>
 

@@ -3,7 +3,7 @@
 @section('content')
 
 
-<a href="/tasks/create" class="btn btn-primary float-right" />New task</a>
+<a href="{{ route('task_create') }}" class="btn btn-primary float-right" />New task</a>
 
 <h2>Tasks</h2>
 <table class="table">
@@ -25,7 +25,7 @@
           <td>{{ $task->name }}</td>
           <td>{{ $task->description }}</td>
           <td>
-            @if ($task->status === 'COMPLETED')
+            @if ($task->isCompleted())
                <span class="badge-pill badge-success">Completed</span>
             @else
                <span class="badge-pill badge-warning">Work in progress</span>
@@ -34,9 +34,9 @@
           <td>
               @if ($task->assign_to_user_id === null)
                  <span class="badge-pill badge-danger">Un-Assigned</span>
-                 <a class="btn btn-primary" href="/tasks/{{$task->id}}/assign">Assign</a>
+                 <a class="btn btn-primary" href="{{ route('task_on_assign',['id' => $task->id ]) }}">Assign</a>
               @else
-                 <form action="/tasks/{{ $task->id }}/unassign" method="post">
+                 <form action="{{ route('task_unassign',['id' => $task->id ]) }}" method="post">
                      @csrf
                      <span class="badge-pill badge-warning">Assigned</span>
                      <button class="btn btn-primary" type="submit">Unassign</button>
@@ -44,10 +44,10 @@
               @endif
           </td>
           <td>
-              <a class="btn btn-primary" href="../tasks/{{ $task->id }}/edit">Update</a>
+              <a class="btn btn-primary" href="{{ route('task_edit',['id' => $task->id ]) }}">Update</a>
           </td>
           <td>
-              <form action="/tasks/{{ $task->id }}" method="post">
+              <form action="{{ route('task_delete',['id' => $task->id ]) }}" method="post">
                   @csrf
                   {{ method_field('delete') }}
                   <button class="btn btn-danger" type="submit">Delete</button>

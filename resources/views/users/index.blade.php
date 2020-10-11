@@ -3,7 +3,7 @@
 @section('content')
 
 
-<a href="/users/create" class="btn btn-primary float-right" />New user</a>
+<a href="{{ route('user_create') }}" class="btn btn-primary float-right" />New user</a>
 
 <h2>Users</h2>
 <table class="table">
@@ -23,10 +23,10 @@
           <td>{{ $user->name }}</td>
           <td>{{ $user->email }}</td>
           <td>
-              <a class="btn btn-primary" href="../users/{{ $user->id }}/edit">Update</a>
+              <a class="btn btn-primary" href="{{ route('user_edit',['id' => $user->id ]) }}">Update</a>
           </td>
           <td>
-              <form action="/users/{{ $user->id }}" method="post">
+              <form action="{{ route('user_delete',['id' => $user->id ]) }}" method="post">
                   @csrf
                   {{ method_field('delete') }}
                   <button class="btn btn-danger" type="submit">Delete</button>

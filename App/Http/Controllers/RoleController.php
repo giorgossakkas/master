@@ -11,16 +11,16 @@ use App\Models\Permission;
 class RoleController extends Controller
 {
 
+    private $roleRepository;
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->roleRepository = app(RoleRepository::class);
     }
 
     public function index()
     {
-        $roleRepository = new RoleRepository();
-        $roles= $roleRepository->getAll();
+        $roles= $this->roleRepository->getAll();
 
         return view('roles.index',compact("roles"));
     }
@@ -33,10 +33,16 @@ class RoleController extends Controller
 
     public function edit($id)
     {
-        $roleRepository = new RoleRepository();
-        $role = $roleRepository->find($id);
-        $permissions = UserPermissionsEnum::getKeys();
-        return view('roles.edit',compact("permissions","role"));
+        $role = $this->roleRepository->find($id);
+        if ($role!=null)
+        {
+            $permissions = UserPermissionsEnum::getKeys();
+            return view('roles.edit',compact("permissions","role"));
+        }
+        else
+        {
+            return redirect()->route('role_index')->withErrors("Role with id ". $id ." not found");
+        }
     }
 
     public function store(Request $request)
@@ -55,15 +61,14 @@ class RoleController extends Controller
             {
                 $permission = new Permission();
                 $permission->type = $permissionType;
-                $permissions[count($permissions)] = $permission;
+                $permissions[] = $permission;
             }
         }
         $role->setPermissionsToCreate($permissions);
 
-        $roleRepository = new RoleRepository();
-        $role = $roleRepository->create($role);
+        $role = $this->roleRepository->create($role);
 
-        return redirect('/roles/index');
+        return redirect()->route('role_index');
     }
 
     public function update(Request $request,$id)
@@ -72,53 +77,57 @@ class RoleController extends Controller
               'name' => 'required|unique:roles,name,'.$id,
           ]);
 
-          $roleRepository = new RoleRepository();
-          $role = $roleRepository->find($id);
+          $role = $this->roleRepository->find($id);
 
-          $role->name=$request->get('name');
-
-          $permissions= $role->permissions;
-
-          $permissionsToRemove=[];
-          $permissionsToCreate=[];
-
-          $permissionTypes = UserPermissionsEnum::getKeys();
-          foreach($request->all() as $permissionType => $value)
+          if ($role!=null)
           {
-             if(in_array($permissionType, $permissionTypes) && ! $role->isPermissionEnable($permissionType) )
-             {
-                 $permission = new Permission();
-                 $permission->type = $permissionType;
-                 $permissionsToCreate[count($permissionsToCreate)] = $permission;
-             }
-          }
+              $role->name=$request->get('name');
 
-          if (count($permissions)>0)
-          {
-              foreach ($permissions as $permission)
+              $permissions= $role->permissions;
+
+              $permissionsToRemove=[];
+              $permissionsToCreate=[];
+
+              $permissionTypes = UserPermissionsEnum::getKeys();
+              foreach($request->all() as $permissionType => $value)
               {
-                if ($request->get($permission->type) === null)
-                {
-                    $permissionsToRemove[count($permissionsToRemove)] =$permission;
-                }
+                 if(in_array($permissionType, $permissionTypes) && ! $role->isPermissionEnable($permissionType) )
+                 {
+                     $permission = new Permission();
+                     $permission->type = $permissionType;
+                     $permissionsToCreate[] = $permission;
+                 }
               }
+
+              if (count($permissions)>0)
+              {
+                  foreach ($permissions as $permission)
+                  {
+                    if ($request->get($permission->type) === null)
+                    {
+                        $permissionsToRemove[] =$permission;
+                    }
+                  }
+              }
+
+              $role->setPermissionsToCreate($permissionsToCreate);
+              $role->setPermissionsToRemove($permissionsToRemove);
+
+              $this->roleRepository->update($role);
+
+              return redirect()->route('role_index');
           }
-
-          $role->setPermissionsToCreate($permissionsToCreate);
-          $role->setPermissionsToRemove($permissionsToRemove);
-
-          $roleRepository = new RoleRepository();
-          $roleRepository->update($role);
-
-          return redirect('/roles/index');
+          else
+          {
+              return redirect()->route('role_index')->withErrors("Role with id ". $id ." not found");
+          }
 
     }
 
     public function delete($id)
     {
-        $roleRepository = new RoleRepository();
-        $roleRepository->delete($id);
+        $this->roleRepository->delete($id);
 
-        return redirect('/roles/index');
+        return redirect()->route('role_index');
     }
 }
