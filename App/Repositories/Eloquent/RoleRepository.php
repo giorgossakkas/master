@@ -10,9 +10,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RoleRepository implements EloquentRepositoryInterface
 {
+    private $with = ['permissions'];
+
     public function getBasicQuery() : Builder
     {
-        return Role::query();
+        return Role::with($this->with);
     }
     public function getAll($exclude_admin = false)
     {
